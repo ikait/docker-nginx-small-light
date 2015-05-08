@@ -93,6 +93,7 @@ RUN \
 
 
 COPY nginx.conf /usr/local/nginx/conf/nginx.conf
+COPY index.html /usr/local/nginx/html/index.html
 
 EXPOSE 80
 
