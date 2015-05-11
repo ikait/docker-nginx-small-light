@@ -6,4 +6,7 @@ dependencies:
   override:
     - docker info
     - docker build -t ikai/nginx_small_light .
- 
+
+test:
+  override:
+    - docker run -it -p 80:80 ikai/nginx_small_light echo "Hello world!" 
