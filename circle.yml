@@ -1,0 +1,9 @@
+machine:
+  services:
+    - docker
+ 
+dependencies:
+  override:
+    - docker info
+    - docker build -t ikai/nginx_small_light .
+ 

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>比較</title>
+<style>
+body {
+	background: #000;
+}
+#show_window {
+	width: 100%;
+	/*
+	height: 450px;
+	overflow: scroll;
+	*/
+	background: #000;
+}
+.cmp_item_wrapper {
+	float: left;
+	color: #aaa;
+	position: relative;
+}
+.cmp_item_wrapper a {
+	color: #aaa;
+	display: block;
+	text-decoration: none;
+}
+.cmp_item_wrapper.first {
+}
+.cmp_item_wrapper.second {
+}
+.cmp_item + p {
+	position: absolute;
+	width: 100%;
+	bottom: 0;
+	margin: 0;
+	padding: 3px 0;	
+	font-size: 12px;
+	font-family: "Helvetica Neue", Arial;
+	background: rgba(0,0,0,0.9);
+}
+#control {
+	position: fixed;
+	right: 20px;
+	bottom: 20px;
+	color: #aaa;
+	text-align: center;
+}
+#control p {
+	font-size: 12px;
+}
+#nav_img {
+	padding-top: 20px;
+}
+input[type="text"] {
+	padding: 5px;
+	font-size: 22px;
+}
+input[type="button"] {
+	padding: 5px;
+	margin: 10px 0;
+	font-size: 22px;
+	display: block;
+	width: 100%;
+}
+
+.jpeg {
+	color: red;
+}
+.webp {
+	color: skyblue;
+}
+.jpeg, .webp {
+	background: #555;
+	padding: 0 3px;
+}
+</style>
+</head>
+<body>
+
+<!--
+<table id="show_window">
+	<div class="cmp_item_wrapper first">
+		<img class="cmp_item" id="original" src="" alt="">			
+		<p>[JPEG] Original</p>	
+	</div>
+	<div class="cmp_item_wrapper second">
+		<img class="cmp_item" id="gt" src="" alt="">				
+		<p>[JPEG] go-thumber</p>
+	</div>
+	<div class="cmp_item_wrapper">
+		<img class="cmp_item" id="sl_imagemagick" src="" alt="">				
+		<p>[JPEG] small_light (imagemagick)</p>
+	</div>
+	<div class="cmp_item_wrapper">
+		<img class="cmp_item" id="sl_gd" src="" alt="">				
+		<p>[JPEG] small_light (gd)</p>
+	</div>
+	<div class="cmp_item_wrapper">
+		<img class="cmp_item" id="sl_imlib2" src="" alt="">				
+		<p>[JPEG] small_light (imlib2)</p>
+	</div>
+	<div class="cmp_item_wrapper">
+		<img class="cmp_item" id="sl_imagemagick_webp" src="" alt="">				
+		<p>[WEBP] small_light (imagemagick)</p>
+	</div>
+	<div class="cmp_item_wrapper">
+		<img class="cmp_item" id="sl_gd_webp" src="" alt="">				
+		<p>[WEBP] small_light (gd)</p>
+	</div>
+</table>
+-->
+
+<table>
+	<tbody>
+		<tr>
+			<td>
+				<div class="cmp_item_wrapper">
+					<a href="">
+						<img class="cmp_item" id="original" src="" alt="">			
+						<p><span class="jpeg">JPEG</span> Original</p>	
+					</a>
+				</div>
+			</td>
+			<td>
+				<div class="cmp_item_wrapper">
+					<a href="">
+						<img class="cmp_item" id="gt" src="" alt="">				
+						<p><span class="jpeg">JPEG</span> go-thumber</p>	
+					</a>
+				</div>
+			</td>
+			<td>
+				<div class="cmp_item_wrapper">
+					<a href="">
+						<img class="cmp_item" id="sl_imagemagick" src="" alt="">				
+						<p><span class="jpeg">JPEG</span> small_light (imagemagick)</p>	
+					</a>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div class="cmp_item_wrapper">
+					<a href="">
+						<img class="cmp_item" id="sl_imagemagick_webp" src="" alt="">				
+						<p><span class="webp">WebP</span> small_light (imagemagick)</p>	
+					</a>
+				</div>
+			</td>
+			<td>
+				<div class="cmp_item_wrapper">
+					<a href="">
+						<img class="cmp_item" id="sl_gd" src="" alt="">				
+						<p><span class="jpeg">JPEG</span> small_light (gd)</p>	
+					</a>
+				</div>
+			</td>
+			<td>
+				<div class="cmp_item_wrapper">
+					<a href="">
+						<img class="cmp_item" id="sl_imlib2" src="" alt="">				
+						<p><span class="jpeg">JPEG</span> small_light (imlib2)</p>	
+					</a>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<form id="control">
+	<label>画像
+		<input id="picture" name="p" type="text" value="3" size="4">
+	</label>
+	<label>画質(13-100) <!-- 13以上でないと gd+webp が表示されないっぽい -->
+		<input id="quality" name="q" type="text" value="95" size="4">
+	</label>
+	<label>横幅(px)
+		<input id="width" name="w" type="text" value="95" size="7">
+	</label>
+	<label>
+		<input id="send" type="submit" value="go">
+	</label>
+	<!--<p>
+		うまく表示されないときは何回か Shift + Cmd + R してください<br>
+		(Windows は Shift + F5)
+	</p>-->
+	<div id="nav_img">
+		<input type="submit" id="prev_img" name="prev" value="前の画像へ">
+		<input type="submit" id="next_img" name="next" value="次の画像へ">
+	</div>
+</form>
+
+<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script>
+$(function () {
+	var INIT_WIDTH = 300;
+	var HEIGHT = 5000;
+	var BASE_URL = "52.68.174.236"
+	var PICT_URL = [
+		"/img/1.jpg", 
+		"/img/2.jpg",
+		"/img/3.jpg",
+		"/img/4.jpg",
+		"/img/5.jpg",
+		"/img/6.jpg",
+		"/img/7.jpg",
+		"/img/8.jpg",
+		"/img/9.jpg",
+		"/img/10.jpg",
+		"/img/11.jpg",
+		"/img/12.jpg",
+		"/img/13.jpg",
+		"/img/14.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_almonds.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_apples.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_baloons.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_bananas.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_billiard_balls_a.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_billiard_balls_b.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_building.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_cards_a.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_cards_b.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_carrots.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_chairs.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_clips.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_coins.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_cushions.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_ducks.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_fence.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_flowers.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_garden_table.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_guitar_bridge.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_guitar_fret.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_guitar_head.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_keyboard_a.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_keyboard_b.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_lion.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_multimeter.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_pencils_a.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_pencils_b.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_pillar.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_plastic.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_roof.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_scarf.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_screws.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_snails.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_socks.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_sweets.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_tomatoes_a.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_tomatoes_b.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_tools_a.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_tools_b.png.jpg",
+"/img/SAMPLING_jpg/img_600x600_3x16bit_T03R03_RGB_wood_game.png.jpg",
+
+
+	];
+	var INIT_PICT = 5;
+	var INIT_QLTY = 30;
+
+	var pictureLoad = function (width, height, quality, base_url, pict_url, pict_num) {
+
+		var SL_ENGINE = {
+			"imlib2": "imlib2", 
+			"imagemagick": "imagemagick", 
+			"gd": "gd"
+		};
+
+		var makeUrl = {
+			original: function (pic) {
+				return [
+					"http://", base_url, pic
+				].join("");
+			},
+			small_light: function (pic, engine, iswebp) {
+				return [
+					"http://", base_url,
+					"/small_light(",
+					"e=", engine, ",",
+					"q=", quality, ",",
+					"of=", iswebp ? "webp" : "jpeg", ",",
+					"jpeghint=", iswebp ? "n" : "y", ",",
+					"dw=", width, ",",
+					"dh=" + height, ")",
+					pic
+				].join("");
+			},
+			go_thumber: function (pic) {
+				return [
+					"http://", base_url, ":443",
+					"/",
+					"w=", width, ",",
+					"h=", height, ",",
+					"a=", "0", ",",
+					"q=", quality,
+					"/",
+					base_url,
+					pic
+				].join("");
+			}
+		};
+
+		$("#quality").val(quality);
+		$("#picture").val(pict_num);
+		$("#width").val(width);
+
+
+		$(".cmp_item").attr({
+			"width": width
+		});
+		$("#original").attr({
+			"src": makeUrl.original(pict_url)
+		}).parent().attr("href", makeUrl.original(pict_url));
+		$("#gt").attr({
+			"src": makeUrl.go_thumber(pict_url)
+		}).parent().attr("href", makeUrl.go_thumber(pict_url));
+		$("#sl_imagemagick").attr({
+			"src": makeUrl.small_light(pict_url, SL_ENGINE["imagemagick"])
+		}).parent().attr("href", makeUrl.small_light(pict_url, SL_ENGINE["imagemagick"]));
+		$("#sl_gd").attr({
+			"src": makeUrl.small_light(pict_url, SL_ENGINE["gd"])
+		}).parent().attr("href", makeUrl.small_light(pict_url, SL_ENGINE["gd"]));
+		$("#sl_imlib2").attr({
+			"src": makeUrl.small_light(pict_url, SL_ENGINE["imlib2"])
+		}).parent().attr("href", makeUrl.small_light(pict_url, SL_ENGINE["imlib2"]));
+		$("#sl_imagemagick_webp").attr({
+			"src": makeUrl.small_light(pict_url, SL_ENGINE["imagemagick"], true)
+		}).parent().attr("href", makeUrl.small_light(pict_url, SL_ENGINE["imagemagick"], true));
+		$("#sl_gd_webp").attr({
+			"src": makeUrl.small_light(pict_url, SL_ENGINE["gd"], true)
+		}).parent().attr("href", makeUrl.small_light(pict_url, SL_ENGINE["gd"], true));
+
+	};
+
+	console.log(location);
+
+	var params = location.href.split("?")[1];
+	if (params) {
+		var params = params.substring(1).split("&");
+		var p = params[0].split("=")[1];
+		var q = params[1].split("=")[1];
+		var w = params[2].split("=")[1];
+
+		if (params.length > 3) {
+			var np = params[3].split("=")[0];
+
+			if (np.indexOf("next") !== -1) {
+				p = p / 1 + 1;
+			} else {
+				p = p / 1 - 1;
+			}
+			
+		}
+
+		if (p < 0) {
+			p = 0;
+		} else if (p > PICT_URL.length - 1) {
+			p = PICT_URL.length - 1;
+		}	
+
+		pictureLoad(w, HEIGHT, q, BASE_URL, PICT_URL[p], p);
+	} else {
+		pictureLoad(INIT_WIDTH, HEIGHT, INIT_QLTY, BASE_URL, PICT_URL[INIT_PICT], INIT_PICT);
+	}
+
+
+
+
+
+});
+</script>
+</body>
+</html>
