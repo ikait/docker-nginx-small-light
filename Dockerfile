@@ -1,8 +1,5 @@
 FROM ubuntu:14.04
 
-RUN \
-  apt-get update && apt-get upgrade -y && \
-  DEBIAN_FRONTEND=noninteractive
 
 ENV WORKDIR "/src"
 ENV NGINX_VER 1.8.0
@@ -11,13 +8,19 @@ ENV LIBGD_VER 2.1.1
 ENV IMLIB2_VER 1.4.7
 ENV NGX_SMALL_LIGHT_VER 0.6.8
 
+
+RUN \
+  apt-get update && apt-get upgrade -y && \
+  DEBIAN_FRONTEND=noninteractive
+
+
 WORKDIR $WORKDIR
+
 
 RUN \
   apt-get install -y \
     wget \
     tar \
-    git \
     gcc \
     make \
     gzip \
@@ -43,7 +46,8 @@ RUN \
   ./configure && \
   make && \
   make install && \
-  ldconfig /usr/local/lib
+  ldconfig /usr/local/lib && \
+  apt-get clean
 
 
 # gd
@@ -62,13 +66,14 @@ RUN \
 RUN \
   apt-get install -y \
     libfreetype6-dev && \
-  wget -O- http://downloads.sourceforge.net/project/enlightenment/imlib2-src/{$IMLIB2_VER}/imlib2-${IMLIB2_VER}.tar.bz2 | \
+  wget -O- http://downloads.sourceforge.net/project/enlightenment/imlib2-src/${IMLIB2_VER}/imlib2-${IMLIB2_VER}.tar.bz2 | \
   tar xj && \
   cd imlib2-${IMLIB2_VER} && \
   ./configure --without-x && \
   make && \
   make install && \
-  ldconfig /usr/local/lib
+  ldconfig /usr/local/lib && \
+  apt-get clean
 
 
 # ngx_small_light
@@ -80,7 +85,9 @@ RUN \
   tar xz && \ 
   cd ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   ./setup --with-imlib2 --with-gd && \
-  ldconfig /usr/local/lib
+  ldconfig /usr/local/lib && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/
 
 
 # nginx
@@ -94,12 +101,21 @@ RUN \
   ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   make && \
   make install && \
-  ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx
+  ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx && \
+  apt-get clean 
+
+
+# clean
+
+RUN \
+  rm -rf /var/lib/apt/lists/
 
 
 COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 COPY index.html /usr/local/nginx/html/index.html
 
+
 EXPOSE 80
+
 
 CMD ["nginx", "-g", "daemon off;"]
