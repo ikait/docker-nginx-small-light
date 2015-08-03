@@ -1,11 +1,13 @@
 FROM ubuntu:14.04
 
 
-ENV WORKDIR "/src"
-ENV NGINX_VER 1.8.0
+ENV WORKDIR /src
+#ENV NGINX_VER 1.8.0
+ENV NGINX_VER 1.4.4
 ENV IMAGEMAGICK_VER 6.9.1-2
 ENV LIBGD_VER 2.1.1
-ENV IMLIB2_VER 1.4.7
+# ENV IMLIB2_VER 1.4.7
+ENV IMLIB2_VER 1.4.2
 ENV NGX_SMALL_LIGHT_VER 0.6.8
 
 
@@ -53,8 +55,8 @@ RUN \
 # gd
 
 RUN \
-  wget -O- https://bitbucket.org/libgd/gd-libgd/downloads/libgd-${LIBGD_VER}.tar.gz | tar xvz && \ 
-  cd libgd-${LIBGD_VER} && \ 
+  wget -O- https://bitbucket.org/libgd/gd-libgd/downloads/libgd-${LIBGD_VER}.tar.gz | tar xvz && \
+  cd libgd-${LIBGD_VER} && \
   ./configure && \
   make && \
   make install && \
@@ -82,7 +84,7 @@ RUN \
   apt-get install -y \
     libpcre3-dev && \
   wget -O- https://github.com/cubicdaiya/ngx_small_light/archive/v${NGX_SMALL_LIGHT_VER}.tar.gz | \
-  tar xz && \ 
+  tar xz && \
   cd ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   ./setup --with-imlib2 --with-gd && \
   ldconfig /usr/local/lib && \
@@ -95,14 +97,15 @@ RUN \
 RUN \
   apt-get install -y \
     libx11-dev && \
-  wget -O- https://github.com/nginx/nginx/archive/v${NGINX_VER}.tar.gz | \
+  wget -O- https://github.com/nginx/nginx/archive/release-${NGINX_VER}.tar.gz | \
   tar xz && \
-  cd nginx-${NGINX_VER} && \
+  cp -p nginx-release-${NGINX_VER}/auto/configure nginx-release-${NGINX_VER}/configure && \
+  cd nginx-releaes-${NGINX_VER} && \
   ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   make && \
   make install && \
   ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx && \
-  apt-get clean 
+  apt-get clean
 
 
 # clean
