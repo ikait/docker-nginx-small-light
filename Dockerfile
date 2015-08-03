@@ -100,7 +100,7 @@ RUN \
   wget -O- https://github.com/nginx/nginx/archive/release-${NGINX_VER}.tar.gz | \
   tar xz && \
   cp -p nginx-release-${NGINX_VER}/auto/configure nginx-release-${NGINX_VER}/configure && \
-  cd nginx-releaes-${NGINX_VER} && \
+  cd nginx-release-${NGINX_VER} && \
   ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   make && \
   make install && \
