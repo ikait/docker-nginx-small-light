@@ -68,6 +68,7 @@ RUN \
 # ngx_lua_module
 
 RUN \
+  apt-get update && \
   apt-get install -y \
     libssl-dev && \
   git clone git@github.com:openresty/lua-resty-string.git && \
