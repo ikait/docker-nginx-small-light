@@ -23,6 +23,7 @@ RUN \
     gcc \
     make \
     gzip \
+    git \
     bzip2
 
 RUN \
