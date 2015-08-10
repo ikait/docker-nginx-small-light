@@ -6,6 +6,7 @@ ENV NGINX_VER 1.8.0
 ENV IMAGEMAGICK_VER 6.9.1-2
 ENV IMLIB2_VER 1.4.7
 ENV NGX_SMALL_LIGHT_VER 0.6.8
+ENV NGX_LUA_STRING_VER v0.09
 
 
 RUN \
@@ -64,6 +65,15 @@ RUN \
   rm -rf /var/lib/apt/lists/
 
 
+# ngx_lua_module
+
+RUN \
+  apt-get install -y \
+    libssl-dev && \
+  git clone git@github.com:openresty/lua-resty-string.git && \
+  git checkout -b ${NGX_LUA_STRING_VER} ${NGX_LUA_STRING_VER}
+
+
 # nginx
 
 RUN \
@@ -73,7 +83,8 @@ RUN \
   tar xz && \
   cp -p nginx-release-${NGINX_VER}/auto/configure nginx-release-${NGINX_VER}/configure && \
   cd nginx-release-${NGINX_VER} && \
-  ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
+  ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} \
+  --add-module=${WORKDIR}/lua-resty-string && \
   make && \
   make install && \
   ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx && \
