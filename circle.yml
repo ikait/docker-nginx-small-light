@@ -1,0 +1,19 @@
+machine:
+  services:
+    - docker
+ 
+dependencies:
+  override:
+    - docker info
+    - docker build -t ikai/nginx_small_light .
+
+test:
+  override:
+    - docker run -it -p 80:80 ikai/nginx_small_light echo "Hello world!" 
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push ikai/nginx_small_light

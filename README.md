@@ -1,3 +1,5 @@
+[![Circle CI](https://circleci.com/gh/ikait/docker-nginx_small_light/tree/dev.svg?style=badge)](https://circleci.com/gh/ikait/docker-nginx_small_light/tree/dev)
+
 # docker-nginx_small_light
 
 Dockerfile for nginx container with [ngx_small_light](https://github.com/cubicdaiya/ngx_small_light).

@@ -1,18 +1,26 @@
 FROM ubuntu:14.04
 
+
+ENV WORKDIR "/src"
+ENV NGINX_VER 1.8.0
+ENV IMAGEMAGICK_VER 6.9.1-2
+ENV LIBGD_VER 2.1.1
+ENV IMLIB2_VER 1.4.7
+ENV NGX_SMALL_LIGHT_VER 0.6.8
+
+
 RUN \
   apt-get update && apt-get upgrade -y && \
   DEBIAN_FRONTEND=noninteractive
 
-ENV WORKDIR="/src"
 
 WORKDIR $WORKDIR
+
 
 RUN \
   apt-get install -y \
     wget \
     tar \
-    git \
     gcc \
     make \
     gzip \
@@ -32,21 +40,21 @@ RUN \
     libpng12-dev \
     libgif-dev \
     libtiff5-dev && \
-  wget http://www.imagemagick.org/download/ImageMagick.tar.gz && \
-  tar xvzf ImageMagick.tar.gz && \
-  cd ImageMagick-6.9.1-2 && \
+  wget -O- http://launchpad.net/imagemagick/main/${IMAGEMAGICK_VER}/+download/ImageMagick-${IMAGEMAGICK_VER}.tar.gz | \
+  tar xz && \
+  cd ImageMagick-${IMAGEMAGICK_VER} && \
   ./configure && \
   make && \
   make install && \
-  ldconfig /usr/local/lib
+  ldconfig /usr/local/lib && \
+  apt-get clean
 
 
 # gd
 
 RUN \
-  wget https://bitbucket.org/libgd/gd-libgd/downloads/libgd-2.1.1.tar.gz && \
-  tar xvzf libgd-2.1.1.tar.gz && \ 
-  cd libgd-2.1.1 && \ 
+  wget -O- https://bitbucket.org/libgd/gd-libgd/downloads/libgd-${LIBGD_VER}.tar.gz | tar xvz && \ 
+  cd libgd-${LIBGD_VER} && \ 
   ./configure && \
   make && \
   make install && \
@@ -58,13 +66,14 @@ RUN \
 RUN \
   apt-get install -y \
     libfreetype6-dev && \
-  wget http://downloads.sourceforge.net/project/enlightenment/imlib2-src/1.4.7/imlib2-1.4.7.tar.bz2 && \
-  tar xvjf imlib2-1.4.7.tar.bz2 && \
-  cd imlib2-1.4.7 && \
+  wget -O- http://downloads.sourceforge.net/project/enlightenment/imlib2-src/${IMLIB2_VER}/imlib2-${IMLIB2_VER}.tar.bz2 | \
+  tar xj && \
+  cd imlib2-${IMLIB2_VER} && \
   ./configure --without-x && \
   make && \
   make install && \
-  ldconfig /usr/local/lib
+  ldconfig /usr/local/lib && \
+  apt-get clean
 
 
 # ngx_small_light
@@ -72,10 +81,13 @@ RUN \
 RUN \
   apt-get install -y \
     libpcre3-dev && \
-  git clone https://github.com/cubicdaiya/ngx_small_light.git && \
-  cd ngx_small_light && \
+  wget -O- https://github.com/cubicdaiya/ngx_small_light/archive/v${NGX_SMALL_LIGHT_VER}.tar.gz | \
+  tar xz && \ 
+  cd ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   ./setup --with-imlib2 --with-gd && \
-  ldconfig /usr/local/lib
+  ldconfig /usr/local/lib && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/
 
 
 # nginx
@@ -83,18 +95,27 @@ RUN \
 RUN \
   apt-get install -y \
     libx11-dev && \
-  wget http://nginx.org/download/nginx-1.6.3.tar.gz && \
-  tar xvzf nginx-1.6.3.tar.gz && \
-  cd nginx-1.6.3 && \
-  ./configure --add-module=${WORKDIR}/ngx_small_light && \
+  wget -O- https://github.com/nginx/nginx/archive/v${NGINX_VER}.tar.gz | \
+  tar xz && \
+  cd nginx-${NGINX_VER} && \
+  ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
   make && \
   make install && \
-  ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx
+  ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx && \
+  apt-get clean 
+
+
+# clean
+
+RUN \
+  rm -rf /var/lib/apt/lists/
 
 
 COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 COPY index.html /usr/local/nginx/html/index.html
 
+
 EXPOSE 80
+
 
 CMD ["nginx", "-g", "daemon off;"]
