@@ -1,12 +1,13 @@
 FROM ubuntu:14.04
 
 
-ENV WORKDIR "/src"
+ENV WORKDIR /src
 ENV NGINX_VER 1.8.0
 ENV IMAGEMAGICK_VER 6.9.1-2
-ENV LIBGD_VER 2.1.1
 ENV IMLIB2_VER 1.4.7
 ENV NGX_SMALL_LIGHT_VER 0.6.8
+ENV NGX_LUA_MODULE_VER v0.9.16
+ENV NGX_LUA_STRING_VER v0.09
 
 
 RUN \
@@ -24,6 +25,7 @@ RUN \
     gcc \
     make \
     gzip \
+    git \
     bzip2
 
 RUN \
@@ -50,60 +52,61 @@ RUN \
   apt-get clean
 
 
-# gd
-
-RUN \
-  wget -O- https://bitbucket.org/libgd/gd-libgd/downloads/libgd-${LIBGD_VER}.tar.gz | tar xvz && \ 
-  cd libgd-${LIBGD_VER} && \ 
-  ./configure && \
-  make && \
-  make install && \
-  ldconfig /usr/local/lib
-
-
-# imlib2
-
-RUN \
-  apt-get install -y \
-    libfreetype6-dev && \
-  wget -O- http://downloads.sourceforge.net/project/enlightenment/imlib2-src/${IMLIB2_VER}/imlib2-${IMLIB2_VER}.tar.bz2 | \
-  tar xj && \
-  cd imlib2-${IMLIB2_VER} && \
-  ./configure --without-x && \
-  make && \
-  make install && \
-  ldconfig /usr/local/lib && \
-  apt-get clean
-
-
 # ngx_small_light
 
 RUN \
   apt-get install -y \
-    libpcre3-dev && \
+    libpcre3-dev libmagickwand-dev && \
   wget -O- https://github.com/cubicdaiya/ngx_small_light/archive/v${NGX_SMALL_LIGHT_VER}.tar.gz | \
-  tar xz && \ 
+  tar xz && \
   cd ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
-  ./setup --with-imlib2 --with-gd && \
+  ./setup && \
   ldconfig /usr/local/lib && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/
 
 
+# ngx_lua_module
+
+RUN \
+  apt-get update && \
+  apt-get install -y \
+    libssl-dev && \
+  git clone https://github.com/openresty/lua-nginx-module.git && \
+  cd lua-nginx-module && \
+  git checkout -b ${NGX_LUA_MODULE_VER} ${NGX_LUA_MODULE_VER}
+
+# ngx_devel_kit
+
+RUN \
+  git clone https://github.com/simpl/ngx_devel_kit.git && \
+  cd ngx_devel_kit && \
+  git checkout -b ${NGX_DEV_KIT_VER} ${NGX_DEV_KIT_VER}
+
+# ngx_lua_string
+
+RUN \
+  git clone https://github.com/openresty/lua-resty-string.git && \
+  cd lua-resty-string && \
+  git checkout -b ${NGX_LUA_STRING_VER} ${NGX_LUA_STRING_VER}
+
 # nginx
 
 RUN \
-  apt-get install -y \
-    libx11-dev && \
-  wget -O- https://github.com/nginx/nginx/archive/v${NGINX_VER}.tar.gz | \
+  apt-get update && apt-get install -y libx11-dev libluajit-5.1-dev
+
+RUN \
+  wget -O- https://github.com/nginx/nginx/archive/release-${NGINX_VER}.tar.gz | \
   tar xz && \
-  cd nginx-${NGINX_VER} && \
-  ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} && \
+  cp -p nginx-release-${NGINX_VER}/auto/configure nginx-release-${NGINX_VER}/configure && \
+  cd nginx-release-${NGINX_VER} && \
+  ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} \
+  --add-module=${WORKDIR}/ngx_devel_kit \
+  --add-module=${WORKDIR}/lua-nginx-module && \
   make && \
   make install && \
   ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx && \
-  apt-get clean 
-
+  apt-get clean
 
 # clean
 
@@ -114,8 +117,6 @@ RUN \
 COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 COPY index.html /usr/local/nginx/html/index.html
 
-
 EXPOSE 80
-
 
 CMD ["nginx", "-g", "daemon off;"]
