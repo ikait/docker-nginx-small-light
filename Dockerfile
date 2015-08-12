@@ -6,6 +6,7 @@ ENV NGINX_VER 1.8.0
 ENV IMAGEMAGICK_VER 6.9.1-2
 ENV IMLIB2_VER 1.4.7
 ENV NGX_SMALL_LIGHT_VER 0.6.8
+ENV NGX_LUA_MODULE_VER v0.9.16
 ENV NGX_LUA_STRING_VER v0.09
 
 
@@ -71,26 +72,41 @@ RUN \
   apt-get update && \
   apt-get install -y \
     libssl-dev && \
-  git clone git@github.com:openresty/lua-resty-string.git && \
-  git checkout -b ${NGX_LUA_STRING_VER} ${NGX_LUA_STRING_VER}
+  git clone https://github.com/openresty/lua-nginx-module.git && \
+  cd lua-nginx-module && \
+  git checkout -b ${NGX_LUA_MODULE_VER} ${NGX_LUA_MODULE_VER}
 
+# ngx_devel_kit
+
+RUN \
+  git clone https://github.com/simpl/ngx_devel_kit.git && \
+  cd ngx_devel_kit && \
+  git checkout -b ${NGX_DEV_KIT_VER} ${NGX_DEV_KIT_VER}
+
+# ngx_lua_string
+
+RUN \
+  git clone https://github.com/openresty/lua-resty-string.git && \
+  cd lua-resty-string && \
+  git checkout -b ${NGX_LUA_STRING_VER} ${NGX_LUA_STRING_VER}
 
 # nginx
 
 RUN \
-  apt-get install -y \
-    libx11-dev && \
+  apt-get update && apt-get install -y libx11-dev libluajit-5.1-dev
+
+RUN \
   wget -O- https://github.com/nginx/nginx/archive/release-${NGINX_VER}.tar.gz | \
   tar xz && \
   cp -p nginx-release-${NGINX_VER}/auto/configure nginx-release-${NGINX_VER}/configure && \
   cd nginx-release-${NGINX_VER} && \
   ./configure --add-module=${WORKDIR}/ngx_small_light-${NGX_SMALL_LIGHT_VER} \
-  --add-module=${WORKDIR}/lua-resty-string && \
+  --add-module=${WORKDIR}/ngx_devel_kit \
+  --add-module=${WORKDIR}/lua-nginx-module && \
   make && \
   make install && \
   ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx && \
   apt-get clean
-
 
 # clean
 
@@ -101,8 +117,6 @@ RUN \
 COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 COPY index.html /usr/local/nginx/html/index.html
 
-
 EXPOSE 80
-
 
 CMD ["nginx", "-g", "daemon off;"]
